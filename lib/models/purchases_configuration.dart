@@ -80,6 +80,12 @@ class PurchasesConfiguration {
   /// No personal identifiable information will be collected.
   /// The default value is false.
   bool diagnosticsEnabled = false;
+
+  /// BEDFIT PATCH: lets a release build configure with a Test Store API key
+  /// instead of the native SDK's deliberate crash. Maps to the native
+  /// `forceAllowTestStoreInReleaseBuilds` dangerous setting. Never enable it
+  /// in a build that goes to App Store / Play review.
+  bool forceAllowTestStoreInReleaseBuilds = false;
 }
 
 /// A [PurchasesConfiguration] convenience object that

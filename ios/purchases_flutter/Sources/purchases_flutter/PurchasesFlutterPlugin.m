@@ -74,6 +74,12 @@ NSString *PurchasesLogHandlerEvent = @"Purchases-LogHandlerEvent";
         if (object != [NSNull null] && object != nil) {
             diagnosticsEnabled = [object boolValue];
         }
+        // BEDFIT PATCH: see PurchasesConfiguration.forceAllowTestStoreInReleaseBuilds.
+        BOOL forceAllowTestStoreInReleaseBuilds = NO;
+        object = arguments[@"forceAllowTestStoreInReleaseBuilds"];
+        if (object != [NSNull null] && object != nil) {
+            forceAllowTestStoreInReleaseBuilds = [object boolValue];
+        }
         [self setupPurchases:apiKey
                    appUserID:appUserID
      purchasesAreCompletedBy:purchasesAreCompletedBy
@@ -84,6 +90,7 @@ shouldShowInAppMessagesAutomatically: shouldShowInAppMessagesAutomatically
 automaticDeviceIdentifierCollectionEnabled:automaticDeviceIdentifierCollectionEnabled
           diagnosticsEnabled:diagnosticsEnabled
    preferredUILocaleOverride:preferredUILocaleOverride
+forceAllowTestStoreInReleaseBuilds:forceAllowTestStoreInReleaseBuilds
                       result:result];
     } else if ([@"setAllowSharingStoreAccount" isEqualToString:call.method]) {
         [self setAllowSharingStoreAccount:[arguments[@"allowSharing"] boolValue] result:result];
@@ -316,6 +323,7 @@ shouldShowInAppMessagesAutomatically:(BOOL)shouldShowInAppMessagesAutomatically
 automaticDeviceIdentifierCollectionEnabled:(BOOL)automaticDeviceIdentifierCollectionEnabled
     diagnosticsEnabled:(BOOL)diagnosticsEnabled
  preferredUILocaleOverride:(nullable NSString *)preferredUILocaleOverride
+forceAllowTestStoreInReleaseBuilds:(BOOL)forceAllowTestStoreInReleaseBuilds
                  result:(FlutterResult)result {
     if ([appUserID isKindOfClass:NSNull.class]) {
         appUserID = nil;
@@ -325,6 +333,12 @@ automaticDeviceIdentifierCollectionEnabled:(BOOL)automaticDeviceIdentifierCollec
     }
 
     // nil so the native SDK applies its own DangerousSettings defaults.
+    // BEDFIT PATCH: settings are passed only when the test-store override is
+    // requested, keeping autoSyncPurchases at its default of YES.
+    RCDangerousSettings *dangerousSettings = forceAllowTestStoreInReleaseBuilds
+        ? [[RCDangerousSettings alloc] initWithAutoSyncPurchases:YES
+                              forceAllowTestStoreInReleaseBuilds:YES]
+        : nil;
     RCPurchases *purchases = [RCPurchases configureWithAPIKey:apiKey
                                                     appUserID:appUserID
                                       purchasesAreCompletedBy:purchasesAreCompletedBy
@@ -332,7 +346,7 @@ automaticDeviceIdentifierCollectionEnabled:(BOOL)automaticDeviceIdentifierCollec
                                                platformFlavor:self.platformFlavor
                                         platformFlavorVersion:self.platformFlavorVersion
                                               storeKitVersion:storeKitVersion
-                                            dangerousSettings:nil
+                                            dangerousSettings:dangerousSettings
                          shouldShowInAppMessagesAutomatically:shouldShowInAppMessagesAutomatically
                                              verificationMode:verificationMode
                                            diagnosticsEnabled:diagnosticsEnabled

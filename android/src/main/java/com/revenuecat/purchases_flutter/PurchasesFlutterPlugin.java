@@ -125,11 +125,13 @@ public class PurchasesFlutterPlugin implements FlutterPlugin, MethodCallHandler,
                         .argument("automaticDeviceIdentifierCollectionEnabled");
                 Boolean diagnosticsEnabled = call.argument("diagnosticsEnabled");
                 String preferredUILocaleOverride = call.argument("preferredUILocaleOverride");
+                // BEDFIT PATCH: see PurchasesConfiguration.forceAllowTestStoreInReleaseBuilds.
+                Boolean forceAllowTestStoreInReleaseBuilds = call.argument("forceAllowTestStoreInReleaseBuilds");
                 setupPurchases(apiKey, appUserId, purchasesAreCompletedBy, useAmazon,
                         shouldShowInAppMessagesAutomatically, verificationMode,
                         pendingTransactionsForPrepaidPlansEnabled,
                         automaticDeviceIdentifierCollectionEnabled, diagnosticsEnabled,
-                        preferredUILocaleOverride, result);
+                        preferredUILocaleOverride, forceAllowTestStoreInReleaseBuilds, result);
                 break;
             case "setAllowSharingStoreAccount":
                 Boolean allowSharing = call.argument("allowSharing");
@@ -433,12 +435,17 @@ public class PurchasesFlutterPlugin implements FlutterPlugin, MethodCallHandler,
             @Nullable Boolean automaticDeviceIdentifierCollectionEnabled,
             @Nullable Boolean diagnosticsEnabled,
             @Nullable String preferredUILocaleOverride,
+            @Nullable Boolean forceAllowTestStoreInReleaseBuilds,
             final Result result) {
         if (this.applicationContext != null) {
             PlatformInfo platformInfo = new PlatformInfo(PLATFORM_NAME, PLUGIN_VERSION);
             Store store = Store.PLAY_STORE;
             if (useAmazon != null && useAmazon) {
                 store = Store.AMAZON;
+            }
+            DangerousSettings dangerousSettings = new DangerousSettings();
+            if (forceAllowTestStoreInReleaseBuilds != null && forceAllowTestStoreInReleaseBuilds) {
+                dangerousSettings.forceAllowTestStoreInReleaseBuilds();
             }
 
             CommonKt.configure(this.applicationContext,
@@ -447,7 +454,7 @@ public class PurchasesFlutterPlugin implements FlutterPlugin, MethodCallHandler,
                     purchasesAreCompletedBy,
                     platformInfo,
                     store,
-                    new DangerousSettings(),
+                    dangerousSettings,
                     shouldShowInAppMessagesAutomatically,
                     verificationMode,
                     pendingTransactionsForPrepaidPlansEnabled,
